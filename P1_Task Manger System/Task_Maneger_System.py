@@ -5,21 +5,28 @@ import os
 
 
 def load_tasks():
-    if not os.path.exists("tasks.json"):
+    if not os.path.exists("task_manager.py"):
         return []
-    with open("tasks.json", "r", encoding="UTF-8") as file:
+    with open("task_manager.py", "r", encoding="UTF-8") as file:
+        content = file.read()
+        if not content.strip():
+            return []
         try:
-            return json.load(file)
+            return json.loads(content)
         except json.JSONDecodeError:
+            print("Error: task_manager.py is not a valid JSON file. Starting with an empty task list.")
             return []
 
-
+"_____________________________________________________________________"
 
 def save_tasks(tasks):
-    with open("tasks.json", "w", encoding="UTF-8") as file:
-        json.dump(tasks, file, indent=4)
+    try:
+        with open("task_manager.py", "w", encoding="UTF-8") as file:
+            json.dump(tasks, file, indent=4)
+    except Exception as e:
+        print(f"Error saving tasks: {e}")
 
-
+"______________________________________________________________________"
 # display menu
 def display_menu():
     while True:
@@ -50,26 +57,44 @@ def display_menu():
         else:
             print("Invalid choice. Please try again.")
 
+"______________________________________________________________________"
+
+def task_status():
+
+    while True:
+        status = input("Enter task status (Pending/Completed): ").strip().lower()
+        if status == "completed":
+            return "Completed"
+        elif status == "pending":
+            return "Pending"
+        else:
+            print("Invalid status. Please enter 'Pending' or 'Completed'.")
+
+"______________________________________________________________________"            
+
+def tasks_name(): 
+    while True:
+        task_name = input("Enter task name: ").strip()
+        if task_name:
+            return task_name
+        else:
+            print("Task name cannot be empty. Please enter a valid task name.")
+
+"______________________________________________________________________"
 
 # Add a new task
 def add_task():
-    try:
-        task_id = int(input("Enter task ID: "))
-    except ValueError:
-        print("Invalid ID. Please enter a valid task ID.")
-        return
+    
+    task_id=max([task["id"] for task in load_tasks()], default=0) + 1
 
-    task_name = input("Enter task name: ").strip()
-    if not task_name:
-        print("Task name cannot be empty.")
-        return
-
-    task_status = input("Enter task status (Pending/Completed): ")
+    task_name = tasks_name()
+    status = task_status()
     tasks = load_tasks()
-    tasks.append({"id": task_id, "name": task_name, "status": task_status})
+    tasks.append({"id": task_id, "name": task_name, "status": status})
     save_tasks(tasks)
     print(f"Task ID {task_id} added.")
 
+"______________________________________________________________________"
 
 # view all tasks
 def view_tasks():
@@ -81,6 +106,7 @@ def view_tasks():
     for task in tasks:
         print(f"ID: {task['id']} | Name: {task['name']} | Status: {task['status']}")
 
+"______________________________________________________________________"
 
 # update a task
 def update_task():
@@ -93,8 +119,8 @@ def update_task():
     tasks = load_tasks()
     for task in tasks:
         if task["id"] == task_id:
-            new_name = input("Enter the new task name: ")
-            new_status = input("Enter the new task status (Pending/Completed): ")
+            new_name = tasks_name()
+            new_status = task_status()
             task["name"] = new_name
             task["status"] = new_status
             save_tasks(tasks)
@@ -102,6 +128,7 @@ def update_task():
             return
     print(f"Task ID {task_id} not found.")
 
+"______________________________________________________________________"
 
 # mark a task as completed
 def mark_task_completed():
@@ -120,6 +147,7 @@ def mark_task_completed():
             return
     print(f"Task ID {task_id} not found.")
 
+"______________________________________________________________________"
 
 # delete a task
 def delete_task():
@@ -132,12 +160,13 @@ def delete_task():
     tasks = load_tasks()
     for task in tasks:
         if task["id"] == task_id:
-            tasks.remove(task)
+            tasks.pop(tasks.index(task))
             save_tasks(tasks)
             print(f"Task ID {task_id} deleted.")
             return
     print(f"Task ID {task_id} not found.")
 
+"______________________________________________________________________"
 
 if __name__ == "__main__":
     display_menu()
